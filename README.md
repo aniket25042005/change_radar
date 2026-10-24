@@ -1,224 +1,233 @@
-# ChangeRadar — Fullstack API Impact Radar
+<div align="center">
 
-ChangeRadar is a local-first, developer-centric static analysis and flight-control tool that detects how backend API changes in FastAPI/Pydantic break frontend consumers in React + TypeScript applications.
+# 📡 ChangeRadar
+### Fullstack API Breaking Change Radar & Blast-Radius Engine
+**Catch breaking backend FastAPI/Pydantic changes before they crash your React + TypeScript production apps.**
 
----
+<p align="center">
+  <img src="https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React 18" />
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/LangGraph-1.2-purple?style=for-the-badge" alt="LangGraph" />
+  <img src="https://img.shields.io/badge/Local_Ollama-llama3.2-black?style=for-the-badge&logo=ollama" alt="Ollama" />
+  <img src="https://img.shields.io/badge/Privacy-100%25_Local_Sandboxed-success?style=for-the-badge" alt="Local Sandboxed" />
+  <img src="https://img.shields.io/badge/Tests-12%2F12_Passing-brightgreen?style=for-the-badge" alt="Tests" />
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License" />
+</p>
 
-## Key Features
+[Quick Start](#-quick-start-in-60-seconds) • [Why ChangeRadar?](#-why-changeradar) • [Key Features](#-key-features) • [LangGraph & Ollama](#-langgraph--local-ollama-copilot) • [Architecture](#-architecture--dataflow) • [API Reference](#-api-endpoints)
 
-1. **Deterministic Static Analysis (AST & Heuristic Parsing)**:
-   - Uses Python's native `ast` to parse FastAPI routes (`@app.*`, `@router.*`), APIRouter prefixes, parameter types, response models, and Pydantic `BaseModel` field schemas.
-   - Scans React/TypeScript `.ts`, `.tsx`, `.js`, and `.jsx` files for endpoint path references, API client wrappers, TypeScript interfaces, component object accessors, and unit test assertions.
-2. **Interactive "Blast Radius" Visual Graph**:
-   - An SVG node-link dependency tree showing `[Route] -> [Pydantic Model] -> [TS Type] -> [UI Component] -> [Unit Test]`.
-   - Affected nodes dynamically pulse in amber/red when an API change is simulated, visually highlighting the blast radius.
-3. **1-Click Frontend Migration Diff & In-App File Application**:
-   - Generates syntax-highlighted unified `.diff` patches (for field removals, renames, type changes, or route shifts) across `.tsx`, `.ts`, and test files.
-   - Includes **"⚡ Apply Directly to Files"** with automatic backup snapshots and an instant **"Undo / Revert Changes"** button, plus 1-click **"Copy Migration Patch"** for `git apply`.
-4. **"Copy for GitHub PR" Markdown Export**:
-   - 1-Click export of a beautifully formatted Markdown blast-radius audit table with risk badge, affected files, line numbers, and regression checklist, ready to paste straight into a GitHub or GitLab Pull Request description.
-5. **LangGraph Agentic Copilot Studio (StateGraph 1.2 Pipeline)**:
-   - Orchestrates a 6-node LangGraph state graph with conditional routing:
-     - `START` &rarr; Conditional Entry (`route_by_mode`: interactive prompt vs full analysis)
-     - `assess_architectural_risk`: Evaluates SemVer contract stability (Major/Minor/Patch) and failure modes.
-     - `synthesize_migration_guide`: Generates human-like chronological developer migration steps across types, client wrappers, and components.
-     - `synthesize_compatibility_code`: Synthesizes zero-downtime dual-read adapters (`normalizeContract`), TypeScript safe access wrappers, and Pydantic field aliases.
-     - `draft_pr_review_comment`: Drafts Senior Staff AI PR review comments with strict approval checklists and risk labels.
-     - `determine_autonomous_next_steps`: Plans autonomous flight-control execution steps and test targets.
-     - `interactive_developer_assistant`: Answers developer questions grounded in AST blast radius context with quick-prompt chips (e.g. Zero-downtime deprecation, Vitest/Pytest specifications).
-   - Real-time **Execution Trace Inspector** measuring exact latency (in milliseconds) and summaries for each executed LangGraph node.
-   - Dedicated **LangGraph Studio Modal** and in-line Impact Report Copilot tabs.
-6. **Git Diff / PR Inspector Mode**:
-   - Either select changes interactively from dropdowns or paste a unified `git diff` from a GitHub/GitLab Pull Request to automatically detect breaking backend changes and compute the frontend blast radius.
-7. **Local-First & Sandboxed**:
-   - 100% offline local processing. Zero code execution of scanned repositories.
-   - Built-in Zip Slip protection, 25MB file upload cap, 100MB zip bomb defense, and automated exclusion of secrets (`.env*`, `*.key`) and vendor folders (`node_modules`, `.venv`).
-   - SQLite local persistence for project records and report histories.
-8. **Bundled 1-Click Demo App**:
-   - Includes a ready-to-test sample full-stack store application (`sample_fullstack_app.zip`) so you can explore all features with a single click.
+</div>
 
 ---
 
-## Architecture & Ports
+## ⚡ The Problem: The Silent Cross-Stack Crash
 
-- **Frontend**: `http://localhost:5173` (React 18 + TypeScript + Vite)
-- **Backend**: `http://127.0.0.1:8000` (FastAPI + Uvicorn + SQLite3)
-- **FastAPI Interactive Docs**: `http://127.0.0.1:8000/docs`
-- **Local Ollama LLM** (Optional): `http://localhost:11434` (Default: `llama3.2`)
+Imagine your backend team renames or removes a response field in FastAPI:
 
----
+```diff
+class UserResponse(BaseModel):
+    id: int
+    name: str
+-   email: str
++   contact_email: str
+```
 
-## 🦙 Local Ollama Integration
-
-ChangeRadar includes native, zero-setup support for **Local Ollama**:
-- Default host: `http://localhost:11434`
-- Default model: `llama3.2` (or configure via `OLLAMA_MODEL=qwen2.5-coder` or any model installed in your Ollama library).
-
-### Running with Ollama:
-1. Ensure Ollama is installed and run your model:
-   ```bash
-   ollama run llama3.2
-   ```
-2. ChangeRadar's LangGraph Copilot will automatically detect the running daemon, display **`🦙 Ollama Online (llama3.2)`** in the UI, and route reasoning queries through your local GPU/CPU.
-3. If Ollama is not running, ChangeRadar **automatically falls back to its deterministic AST engine** with zero crashes and instant responses.
+| Scenario | What Happens |
+| :--- | :--- |
+| **Backend CI Pipeline** | 🟢 **100% Passes** — Pytest passes, schemas validate cleanly. |
+| **Frontend Production** | 🔴 **CRASHES** — React components throw `TypeError: Cannot read properties of undefined (reading 'email')`. |
+| **With ChangeRadar 📡** | 🛡️ **PRE-FLIGHT RADAR** — Pinpoints all 4 affected UI components, renders an interactive blast radius graph, synthesizes a 1-click migration `.diff`, and drafts a Senior Staff PR review via LangGraph & local Ollama! |
 
 ---
 
-## Getting Started
+## 🌟 Key Features
+
+### 1. 🎯 Cross-Stack Static Analysis (Zero Code Execution)
+- **Python AST Parser**: Deeply extracts FastAPI routes (`@app.*`, `@router.*`), APIRouter prefixes, query/path parameters, and Pydantic `BaseModel` field schemas.
+- **TypeScript Consumer Scanner**: Recursively scans `.ts`, `.tsx`, `.js`, and `.jsx` files for route paths, Axios/fetch clients, interface type contracts, component accessors, and Vitest/Jest unit tests.
+
+### 2. 🗺️ Interactive "Blast Radius" Dependency Graph
+- An interactive, dark-themed SVG node-link tree mapping:
+  $$\text{FastAPI Route} \longrightarrow \text{Pydantic Schema} \longrightarrow \text{TS Interface} \longrightarrow \text{React Component} \longrightarrow \text{Unit Test}$$
+- Affected nodes dynamically pulse in amber and red when an API change or Pull Request is simulated.
+
+### 3. ⚡ 1-Click Migration Diff & Direct File Application
+- Automatically synthesizes clean, unified `.diff` migration patches for field removals, renames, type shifts, and route modifications.
+- **Apply Directly to Files**: 1-click automated file refactoring with automatic safety backups (`.backups/`) and instant **Undo / Revert Changes** support.
+
+### 4. 🦙 LangGraph 1.2 Agentic Copilot Studio + Local Ollama
+- Features a compiled **6-Node LangGraph StateGraph** with conditional routing:
+  - `assess_architectural_risk`: Evaluates SemVer contract stability (Major/Minor/Patch) and failure severity.
+  - `synthesize_migration_guide`: Generates chronological developer migration walkthroughs.
+  - `synthesize_compatibility_code`: Writes zero-downtime dual-read adapters (`normalizeContract`) and Pydantic aliases.
+  - `draft_pr_review_comment`: Drafts an AI Senior Staff PR review comment with required approval gates.
+  - `determine_autonomous_next_steps`: Plans autonomous flight-control next steps and test targets.
+  - `interactive_developer_assistant`: Interactive Q&A chat powered by **Local Ollama (`llama3.2`)** with real-time execution trace latency metrics (ms).
+
+### 5. 📋 "Copy for GitHub PR" Markdown Export
+- 1-Click export of an audit report with risk badges, affected consumer files, line numbers, and regression test checklists ready to paste straight into a GitHub or GitLab Pull Request.
+
+### 6. 🔒 100% Local Sandboxing & Privacy
+- **Zero Cloud Uploads**: 100% local execution on your machine.
+- **Zero Code Execution**: Scanned repositories are analyzed purely via static text and AST tokens (`eval` or script execution is strictly forbidden).
+- **Hardened Sandboxing**: Zip Slip path traversal defense, 25MB archive limit, 100MB zip bomb defense, and automated secret filtering (`.env*`, `*.pem`, `*.key`, `node_modules`, `.venv`).
+
+---
+
+## 🏗️ Architecture & Dataflow
+
+```mermaid
+flowchart LR
+    A[📦 Upload ZIP / Demo App] --> B[🛡️ Safe Sandbox & Secret Filter]
+    B --> C[🐍 Python AST Parser]
+    B --> D[⚛️ TypeScript / React Scanner]
+    C --> E[📊 Cross-Stack Blast Radius Graph]
+    D --> E
+    E --> F[🧪 API Change Simulator / PR Diff]
+    F --> G[🤖 LangGraph StateGraph 1.2]
+    G --> H[🦙 Local Ollama Inference]
+    G --> I[⚡ 1-Click Migration Patch]
+    I --> J[💾 Safe File Applier & Instant Revert]
+    G --> K[📋 GitHub PR Markdown Export]
+```
+
+---
+
+## 🚀 Quick Start in 60 Seconds
 
 ### Prerequisites
-
-- **Python 3.11+** (Tested on Python 3.11 - 3.14)
-- **Node.js v18+** (Tested on Node.js v22)
-- **npm** (Tested on npm 10)
+- **Python 3.11+**
+- **Node.js v18+** & **npm**
+- *(Optional for neural LLM)*: [Ollama](https://ollama.com) installed
 
 ---
 
-### Backend Setup
+### 1. Start Backend
 
-#### Windows PowerShell:
-```powershell
+```bash
+# Navigate to backend and install dependencies
 cd backend
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
+
+# Launch FastAPI on port 8000
 python -m uvicorn app.main:app --reload --port 8000
 ```
-
-#### macOS / Linux:
-```bash
-cd backend
-python3 -m pip install -r requirements.txt
-python3 -m uvicorn app.main:app --reload --port 8000
-```
-
-*The backend will initialize the SQLite database (`changeradar.db`) and be accessible at `http://127.0.0.1:8000`.*
+> *Backend boots on `http://127.0.0.1:8000` and creates local SQLite storage `changeradar.db`.*
 
 ---
 
-### Frontend Setup
+### 2. Start Frontend
 
-Open a separate terminal:
-
-#### Windows PowerShell or macOS / Linux:
 ```bash
+# In a new terminal, navigate to frontend
 cd frontend
 npm install
+
+# Start Vite dev server on port 5173
 npm run dev
 ```
-
-*The frontend development server will launch at `http://localhost:5173` with automatic API proxying to port 8000.*
+> *Frontend opens at `http://localhost:5173` (also served directly by FastAPI at `http://127.0.0.1:8000/`).*
 
 ---
 
-## Running Tests & Verifications
+### 3. Take a 1-Click Test Drive!
+1. Open **http://localhost:5173**.
+2. Click **"Load Demo Sample"** in the top navigation bar.
+3. The bundled demo store app (`sample_fullstack_app.zip`) will load instantly.
+4. Select `Remove Response Field` &rarr; `email` &rarr; Click **"Simulate Change & Generate Radar Report"**.
+5. Watch the Blast Radius graph illuminate, preview the 1-Click Migration Patch, and chat with the LangGraph Copilot!
 
-### 1. Backend Automated Tests (Pytest)
-Run the full test suite (covering Zip Slip rejection, AST route/schema extraction, impact scoring, patch generation, and API endpoints):
+---
+
+## 🦙 LangGraph & Local Ollama Copilot
+
+ChangeRadar includes native, zero-setup support for **Local Ollama** with automatic fallback to a deterministic AST engine if Ollama is offline.
+
 ```bash
-python -m pytest backend/tests
+# 1. Download and run Meta's compact 2GB model
+ollama run llama3.2
+
+# 2. Or run a coding specialist model
+ollama run qwen2.5-coder
 ```
 
-### 2. Frontend Production Build & Type Check
-Verify that all TypeScript types pass strict checks and produce an optimized bundle:
+- When Ollama is active on `http://localhost:11434`, ChangeRadar displays:  
+  **`🟢 🦙 Ollama Online (llama3.2)`** in the LangGraph Studio.
+- Inquiries generate **100% private, on-device GPU/CPU reasoning** with zero API costs.
+- If Ollama is stopped, ChangeRadar **seamlessly falls back to the local AST engine** without interruptions.
+
+---
+
+## 🧪 Verification & Automated Tests
+
+ChangeRadar comes with an exhaustive test suite covering security, parsers, and agents:
+
 ```bash
+# Run 12/12 passing Pytest tests
+python -m pytest backend/tests
+
+# Verify strict TypeScript compilation & build
 cd frontend
 npm run build
 ```
 
 ---
 
-## How to Use ChangeRadar
+## 🔌 API Endpoints
 
-1. **Open the Web UI** at `http://localhost:5173`.
-2. **Load a Project**:
-   - Click **"Load Demo Sample"** for instant 1-click test drive, OR
-   - Drag & drop your own repository ZIP file (up to 25 MB).
-3. **Explore Discovered Inventory**:
-   - Inspect all discovered FastAPI endpoints, HTTP methods, and Pydantic schemas.
-   - View the **Blast Radius Graph** mapping routes to UI components and unit tests.
-4. **Simulate an API Change**:
-   - In the **Simulator panel**, choose a change type (e.g. `Remove Response Field` or `Rename Response Field`) and select target field `email`.
-   - Alternatively, toggle to **Git Diff Mode** and paste a unified diff from a Pull Request.
-   - Click **"Simulate Change & Generate Radar Report"**.
-5. **Inspect the Impact Report**:
-   - Check the **Risk Level** (`Breaking`, `Warning`, `Informational`) and confidence rating.
-   - Inspect the affected frontend files and line numbers with code snippets.
-   - Review discovered unit tests and suggested regression tests.
-   - If available, click **"1-Click Migration Patch"** to view and copy a unified `.diff` patch ready to apply with `git apply`.
-6. **Manage Stored Reports**:
-   - View previous audit runs in the **Report History** list.
-   - Delete projects and their associated workspace files with 1 click.
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/health` | Healthcheck & local privacy status |
+| `POST` | `/api/projects/upload` | Upload & sandbox a repository ZIP |
+| `POST` | `/api/projects/sample` | Provision the bundled demo store project |
+| `GET` | `/api/projects` | List all scanned local projects |
+| `GET` | `/api/projects/{id}/endpoints` | Discovered FastAPI routes & Pydantic models |
+| `GET` | `/api/projects/{id}/graph` | Cross-stack SVG Blast Radius dependency graph |
+| `POST` | `/api/projects/{id}/analyze` | Run simulation (remove, rename, type shift, git diff) |
+| `POST` | `/api/projects/{id}/apply-patch`| Apply migration patch to disk with safety snapshot |
+| `POST` | `/api/projects/{id}/revert-patch`| Revert changes instantly from backup snapshot |
+| `GET` | `/api/projects/{id}/agent-graph-spec` | LangGraph StateGraph topology specification |
+| `POST` | `/api/projects/{id}/agent-query` | Interactive LangGraph + Ollama Copilot query |
+| `GET` | `/api/ollama/status` | Real-time Local Ollama connectivity & model info |
 
 ---
 
-## Project Structure
+## 📂 Repository Structure
 
 ```text
-changeradar/
-├── README.md                      # Project documentation and run guide
-├── PLAN.md                        # Architectural roadmap & specifications
-├── ChangeRadar_Antigravity.md     # Initial MVP specifications
-├── .gitignore                     # Git ignore rules
+change_radar/
 ├── backend/
-│   ├── requirements.txt           # Python dependencies
-│   ├── changeradar.db             # Local SQLite database
-│   ├── samples/                   # Bundled sample fullstack project zip
-│   ├── workspace/extracted/       # Sandboxed extracted project directories
 │   ├── app/
-│   │   ├── main.py                # FastAPI app entrypoint, CORS, lifespan
-│   │   ├── config.py              # Configuration & safety limits
-│   │   ├── database.py            # SQLite schema and parameterized CRUD
-│   │   ├── api/
-│   │   │   └── routes/
-│   │   │       ├── projects.py    # Upload, sample load, list, delete
-│   │   │       ├── analysis.py    # Endpoints, graph, impact simulation
-│   │   │       └── reports.py     # Historical reports retrieval
-│   │   ├── schemas/
-│   │   │   ├── project.py         # Pydantic project models
-│   │   │   └── analysis.py        # Pydantic analysis & graph models
-│   │   └── services/
-│   │       ├── zip_service.py     # Safe zip extraction & Zip Slip defense
-│   │       ├── scanner.py         # File tree scanner & tech detector
-│   │       ├── fastapi_parser.py  # Python AST parser for routes & Pydantic
-│   │       ├── typescript_parser.py# Heuristic scanner for TS/TSX consumers
-│   │       ├── blast_radius.py    # Cross-stack dependency graph generator
-│   │       ├── patch_service.py   # Unified .diff migration patch generator
-│   │       ├── git_diff_parser.py # Pull request diff parser
-│   │       └── impact_analyzer.py # Impact engine & test generator
-│   └── tests/
-│       ├── test_zip_service.py    # Zip Slip & security test suite
-│       ├── test_fastapi_parser.py # AST parser test suite
-│       ├── test_impact_analyzer.py# Impact engine & patch test suite
-│       └── test_api_endpoints.py  # FastAPI integration test suite
-└── frontend/
-    ├── package.json               # Node dependencies & build scripts
-    ├── index.html                 # HTML shell with Inter & JetBrains Mono
-    ├── vite.config.ts             # Vite configuration with backend proxy
-    ├── tsconfig.json              # TypeScript strict configuration
-    └── src/
-        ├── main.tsx               # React DOM entrypoint
-        ├── App.tsx                # Main ChangeRadar application view
-        ├── api/
-        │   └── client.ts          # Typed REST client
-        ├── styles/
-        │   └── global.css         # Developer dark theme design system
-        └── components/
-            ├── Header.tsx         # Brand, privacy badge, project switcher
-            ├── UploadPanel.tsx    # Drag-and-drop ZIP & sample loader
-            ├── EndpointList.tsx   # Routes & Pydantic schemas inventory
-            ├── BlastRadiusGraph.tsx# Interactive SVG blast radius graph
-            ├── ChangeSimulator.tsx# Dual-mode change simulator (Form / Diff)
-            ├── ImpactReport.tsx   # Impact audit report with evidence
-            ├── MigrationPatchModal.tsx # Unified .diff viewer & copy modal
-            ├── ReportHistory.tsx  # Historical reports list
-            └── StatusMessage.tsx  # Alert banners
+│   │   ├── api/routes/            # Endpoints, projects, reports, analysis
+│   │   ├── services/
+│   │   │   ├── agentic_copilot.py # LangGraph 1.2 StateGraph & conditional router
+│   │   │   ├── ollama_service.py  # Local Ollama client with auto-fallback
+│   │   │   ├── blast_radius.py    # Cross-stack graph generator
+│   │   │   ├── fastapi_parser.py  # Python AST router & Pydantic schema parser
+│   │   │   ├── typescript_parser.py# React/TypeScript AST scanner
+│   │   │   ├── patch_service.py   # Unified .diff patch synthesizer
+│   │   │   ├── patch_applier.py   # Atomic file patching & instant undo
+│   │   │   └── zip_service.py     # Zip Slip path traversal defense
+│   │   ├── database.py            # Local SQLite schema & parameterized queries
+│   │   └── main.py                # FastAPI app with static frontend mounting
+│   ├── samples/                   # Bundled full-stack demo application
+│   └── tests/                     # 12 Pytest unit & integration tests
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── BlastRadiusGraph.tsx   # Interactive SVG node-link graph
+│   │   │   ├── ChangeSimulator.tsx    # Dual-mode change simulator & PR diff
+│   │   │   ├── ImpactReport.tsx       # Severity audit, checklist, copy PR
+│   │   │   ├── LangGraphWorkspace.tsx # Interactive agent studio & trace inspector
+│   │   │   ├── MigrationPatchModal.tsx# Unified diff viewer & 1-click applier
+│   │   │   └── Header.tsx             # Project switcher & Ollama status
+│   │   ├── api/client.ts              # Typed TypeScript client
+│   │   └── styles/global.css          # Dark-mode design system & animations
 ```
 
 ---
 
-## Safety & Security Guarantees
+## 📄 License
 
-- **No Code Execution**: Scanned repositories are strictly analyzed as static text and AST tokens. Neither `npm install`, `pip install`, nor any build/test scripts are executed on uploaded repositories.
-- **Zip Slip Defense**: Path traversal attempts (e.g. `../../etc/passwd` or drive prefixes) are rejected at the archive extraction boundary.
-- **Secret & Environment File Exclusion**: Files matching `.env*`, `*.pem`, `*.key`, `id_rsa`, or `credentials.json` are automatically skipped and never indexed.
-- **Dependency Directory Exclusion**: `node_modules`, `.venv`, `.git`, `dist`, and `__pycache__` are excluded by default.
-- **100% Local & Offline**: All processing happens on the user's machine; no repository code or metadata is sent to any cloud server or external service.
+MIT © [Aniket Kumar Singh](https://github.com/aniket25042005). Open source, free for personal and commercial developer workflows.
