@@ -1,0 +1,1 @@
+"""ChangeRadar backend application package."""
